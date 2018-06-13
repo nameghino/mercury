@@ -14,6 +14,7 @@ enum MessageType: String {
     case scan
     case update
     case message
+    case buzz
 }
 
 typealias Message = (type: MessageType, payload: [String : Any])

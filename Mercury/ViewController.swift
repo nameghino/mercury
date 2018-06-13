@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AudioToolbox.AudioServices
 
 let logDateFormatter: DateFormatter = {
     let df = DateFormatter()
@@ -67,7 +68,7 @@ class HomeViewModel: HomeViewModelProtocol {
     }
 
     func sendPing() {
-        let message: Message = (.ping, [:])
+        let message: Message = (.buzz, [:])
         MultipeerManager.shared.broadcast(message: message)
     }
 
@@ -82,6 +83,12 @@ class ViewController: UIViewController {
     lazy var viewModel: HomeViewModelProtocol = {
         let vm = HomeViewModel(with: self)
         return vm
+    }()
+
+    lazy var feedbackGenerator: UIImpactFeedbackGenerator = {
+        let fg = UIImpactFeedbackGenerator(style: .heavy)
+        fg.prepare()
+        return fg
     }()
 
     lazy var hostButton: UIButton = {
@@ -200,6 +207,24 @@ class ViewController: UIViewController {
         present(controller, animated: true, completion: nil)
     }
 
+    private func handleBuzz(_ m: Message, from: String) {
+        DispatchQueue.main.async { [unowned self] in
+            let hasTapticEngine: Bool
+            if let r = UIDevice.current.value(forKey: "_feedbackSupportLevel") as? Int {
+                hasTapticEngine = r == 2
+            } else {
+                hasTapticEngine = false
+            }
+
+            if hasTapticEngine {
+                self.feedbackGenerator.impactOccurred()
+                self.feedbackGenerator.prepare()
+            } else {
+                AudioServicesPlayAlertSound(kSystemSoundID_Vibrate)
+            }
+        }
+    }
+
     private func handleMessage(_ m: Message, from: String) {
         consoleTextField.log("\(from): \(m.payload["text"]!)")
     }
@@ -210,6 +235,8 @@ extension ViewController: SessionHandlerProtocol {
         switch message.type {
         case .message:
             handleMessage(message, from: peer)
+        case .buzz:
+            handleBuzz(message, from: peer)
         default:
             break
         }

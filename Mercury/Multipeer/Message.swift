@@ -17,28 +17,31 @@ enum MessageType: String {
     case buzz
 }
 
-typealias Message = (type: MessageType, payload: [String : Any])
+struct MercuryMessage: MultipeerMessage {
+    let type: MessageType
+    let payload: [String : Any]
 
-func encodeMessage(_ message: Message) throws -> Data {
-    var contents: [String : Any] = [:]
-    contents["messageType"] = message.type.rawValue
-    contents["payload"] = message.payload
-    return try JSONSerialization.data(withJSONObject: contents, options: [.sortedKeys])
-}
-
-enum MessageDecodingError: Error {
-    case illegalPayload
-}
-
-func decodeMessage(_ data: Data) throws -> Message {
-    guard
-        let object = try JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
-        let typeString = object["messageType"] as? String,
-        let type = MessageType(rawValue: typeString),
-        let payload = object["payload"] as? [String : Any]
-    else {
-        throw MessageDecodingError.illegalPayload
+    init(type: MessageType, payload: [String : Any]? = nil) {
+        self.type = type
+        self.payload = payload ?? [:]
     }
 
-    return (type, payload)
+    func encode() throws -> Data {
+        var contents: [String : Any] = [:]
+        contents["messageType"] = type.rawValue
+        contents["payload"] = payload
+        return try JSONSerialization.data(withJSONObject: contents, options: [.sortedKeys])
+    }
+
+    static func decode(from data: Data) throws -> MercuryMessage {
+        guard
+            let object = try JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
+            let typeString = object["messageType"] as? String,
+            let type = MessageType(rawValue: typeString),
+            let payload = object["payload"] as? [String : Any]
+            else {
+                throw MessageDecodingError.illegalPayload
+        }
+        return MercuryMessage(type: type, payload: payload)
+    }
 }

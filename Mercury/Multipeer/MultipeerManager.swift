@@ -20,10 +20,33 @@ extension MCSession {
     }
 }
 
-class MultipeerManager: NSObject {
-    static let shared = MultipeerManager()
+protocol MultipeerMessage {
+    static func decode(from data: Data) throws -> Self
+    func encode() throws -> Data
+}
 
-    static var serviceType = "FILL-WITH-PROPER-INFO"
+enum MessageDecodingError: Error {
+    case illegalPayload
+}
+
+extension MultipeerMessage where Self: NSCoding {
+    static func decode(from data: Data) throws -> Self {
+        guard let m = NSKeyedUnarchiver.unarchiveObject(with: data) as? Self else {
+            fatalError()
+        }
+        return m
+    }
+
+    func encode() throws -> Data {
+        return NSKeyedArchiver.archivedData(withRootObject: self)
+    }
+}
+
+class MultipeerManager<Message: MultipeerMessage>: NSObject, MCSessionDelegate, MCNearbyServiceBrowserDelegate, MCNearbyServiceAdvertiserDelegate {
+    //static let shared = MultipeerManager()
+
+    var serviceType = "FILL-WITH-PROPER-INFO"
+
     private let peerID = MCPeerID(displayName: UIDevice.current.name)
     private let advertiser: MCNearbyServiceAdvertiser
     private let browser: MCNearbyServiceBrowser
@@ -39,9 +62,9 @@ class MultipeerManager: NSObject {
         return s
     }()
 
-    override init() {
-        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: nil, serviceType: MultipeerManager.serviceType)
-        browser = MCNearbyServiceBrowser(peer: peerID, serviceType: MultipeerManager.serviceType)
+    init(serviceType: String, discoveryInfo: [String : String]? = nil) {
+        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: discoveryInfo, serviceType: serviceType)
+        browser = MCNearbyServiceBrowser(peer: peerID, serviceType: serviceType)
         super.init()
         advertiser.delegate = self
         browser.delegate = self
@@ -71,7 +94,7 @@ class MultipeerManager: NSObject {
 
     func send(message: Message, to peers: [MCPeerID]) {
         do {
-            let data = try encodeMessage(message)
+            let data = try message.encode()
             try session.send(data, toPeers: peers, with: .reliable)
         } catch {
             print("could not send")
@@ -80,21 +103,19 @@ class MultipeerManager: NSObject {
 
     func broadcast(message: Message) {
         do {
-            let data = try encodeMessage(message)
+            let data = try message.encode()
             try session.broadcast(data: data, with: .reliable)
         } catch {
             print("could not broadcast")
         }
     }
-}
 
-extension MultipeerManager: MCNearbyServiceAdvertiserDelegate {
+    // MARK: - advertiser delegate
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         invitationHandler(true, self.session)
     }
-}
 
-extension MultipeerManager: MCNearbyServiceBrowserDelegate {
+    // MARK: - browser delegate
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
         print("\(#function)")
         browser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 10)
@@ -103,9 +124,8 @@ extension MultipeerManager: MCNearbyServiceBrowserDelegate {
     func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         print("\(#function)")
     }
-}
 
-extension MultipeerManager: MCSessionDelegate {
+    // MARK: - session delegate
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         print("\(#function) - \(peerID.displayName) - \(state)")
         var connected = false
@@ -124,7 +144,7 @@ extension MultipeerManager: MCSessionDelegate {
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         print("\(#function) - \(peerID.displayName) - \(data)")
         do {
-            let message = try decodeMessage(data)
+            let message = try Message.decode(from: data)
             self.messageReceived?(peerID.displayName, message)
         } catch {
             print("could not decode received message")

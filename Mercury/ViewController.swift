@@ -34,48 +34,47 @@ protocol HomeViewModelProtocol {
 }
 
 protocol SessionHandlerProtocol {
-    func received(message: Message, from peer: String)
+    func received(message: MercuryMessage, from peer: String)
     func peer(_ peer: String, stateChangedTo connected: Bool)
 
 }
 
 class HomeViewModel: HomeViewModelProtocol {
     private let handler: SessionHandlerProtocol
+    private var multipeerManager: MultipeerManager<MercuryMessage> = MultipeerManager<MercuryMessage>(serviceType: "boarding")
 
     init(with handler: SessionHandlerProtocol) {
-        MultipeerManager.serviceType = "boarding"
-
         self.handler = handler
 
         // Ugly hack, too late to do it right, maybe tomorrow
-        MultipeerManager.shared.messageReceived = { from, message in
+        multipeerManager.messageReceived = { from, message in
             handler.received(message: message, from: from)
         }
 
-        MultipeerManager.shared.peerStateChanged = { peer, isConnected in
+        multipeerManager.peerStateChanged = { peer, isConnected in
             handler.peer(peer, stateChangedTo: isConnected)
         }
     }
 
     func host() {
-        MultipeerManager.shared.role = .advertiser
-        MultipeerManager.shared.start()
+        multipeerManager.role = .advertiser
+        multipeerManager.start()
     }
 
     func join() {
-        MultipeerManager.shared.role = .joiner
-        MultipeerManager.shared.start()
+        multipeerManager.role = .joiner
+        multipeerManager.start()
     }
 
     func sendPing() {
-        let message: Message = (.buzz, [:])
-        MultipeerManager.shared.broadcast(message: message)
+        let message = MercuryMessage(type: .buzz)
+        multipeerManager.broadcast(message: message)
     }
 
     func send(message: String) {
-        let message: Message = (.message, ["text": message])
+        let message = MercuryMessage(type: .message, payload: ["text": message])
         handler.received(message: message, from: "Me")
-        MultipeerManager.shared.broadcast(message: message)
+        multipeerManager.broadcast(message: message)
     }
 }
 
@@ -207,7 +206,7 @@ class ViewController: UIViewController {
         present(controller, animated: true, completion: nil)
     }
 
-    private func handleBuzz(_ m: Message, from: String) {
+    private func handleBuzz(_ m: MercuryMessage, from: String) {
         DispatchQueue.main.async { [unowned self] in
             let hasTapticEngine: Bool
             if let r = UIDevice.current.value(forKey: "_feedbackSupportLevel") as? Int {
@@ -225,13 +224,13 @@ class ViewController: UIViewController {
         }
     }
 
-    private func handleMessage(_ m: Message, from: String) {
+    private func handleMessage(_ m: MercuryMessage, from: String) {
         consoleTextField.log("\(from): \(m.payload["text"]!)")
     }
 }
 
 extension ViewController: SessionHandlerProtocol {
-    func received(message: Message, from peer: String) {
+    func received(message: MercuryMessage, from peer: String) {
         switch message.type {
         case .message:
             handleMessage(message, from: peer)

@@ -14,6 +14,8 @@
 		351C812920CE110E00DE22C3 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 351C812720CE110E00DE22C3 /* LaunchScreen.storyboard */; };
 		351C813120CE112E00DE22C3 /* MultipeerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C813020CE112E00DE22C3 /* MultipeerManager.swift */; };
 		351C813420CE27D000DE22C3 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C813320CE27D000DE22C3 /* Message.swift */; };
+		35F1FC7820D211BB00586996 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F1FC7720D211BB00586996 /* HomeViewModel.swift */; };
+		35F1FC7A20D2136000586996 /* MultipeerSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F1FC7920D2136000586996 /* MultipeerSyncEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +28,8 @@
 		351C812A20CE110E00DE22C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		351C813020CE112E00DE22C3 /* MultipeerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerManager.swift; sourceTree = "<group>"; };
 		351C813320CE27D000DE22C3 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		35F1FC7720D211BB00586996 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		35F1FC7920D2136000586996 /* MultipeerSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerSyncEngine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +62,7 @@
 		351C811D20CE110D00DE22C3 /* Mercury */ = {
 			isa = PBXGroup;
 			children = (
+				351C813320CE27D000DE22C3 /* Message.swift */,
 				351C813220CE27C300DE22C3 /* Multipeer */,
 				351C811E20CE110D00DE22C3 /* AppDelegate.swift */,
 				351C812020CE110D00DE22C3 /* ViewController.swift */,
@@ -65,6 +70,7 @@
 				351C812520CE110E00DE22C3 /* Assets.xcassets */,
 				351C812720CE110E00DE22C3 /* LaunchScreen.storyboard */,
 				351C812A20CE110E00DE22C3 /* Info.plist */,
+				35F1FC7720D211BB00586996 /* HomeViewModel.swift */,
 			);
 			path = Mercury;
 			sourceTree = "<group>";
@@ -73,7 +79,7 @@
 			isa = PBXGroup;
 			children = (
 				351C813020CE112E00DE22C3 /* MultipeerManager.swift */,
-				351C813320CE27D000DE22C3 /* Message.swift */,
+				35F1FC7920D2136000586996 /* MultipeerSyncEngine.swift */,
 			);
 			path = Multipeer;
 			sourceTree = "<group>";
@@ -152,6 +158,8 @@
 				351C812120CE110D00DE22C3 /* ViewController.swift in Sources */,
 				351C813420CE27D000DE22C3 /* Message.swift in Sources */,
 				351C813120CE112E00DE22C3 /* MultipeerManager.swift in Sources */,
+				35F1FC7820D211BB00586996 /* HomeViewModel.swift in Sources */,
+				35F1FC7A20D2136000586996 /* MultipeerSyncEngine.swift in Sources */,
 				351C811F20CE110D00DE22C3 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

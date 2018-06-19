@@ -36,46 +36,6 @@ protocol HomeViewModelProtocol {
 protocol SessionHandlerProtocol {
     func received(message: MercuryMessage, from peer: String)
     func peer(_ peer: String, stateChangedTo connected: Bool)
-
-}
-
-class HomeViewModel: HomeViewModelProtocol {
-    private let handler: SessionHandlerProtocol
-    private var multipeerManager: MultipeerManager<MercuryMessage> = MultipeerManager<MercuryMessage>(serviceType: "boarding")
-
-    init(with handler: SessionHandlerProtocol) {
-        self.handler = handler
-
-        // Ugly hack, too late to do it right, maybe tomorrow
-        multipeerManager.messageReceived = { from, message in
-            handler.received(message: message, from: from)
-        }
-
-        multipeerManager.peerStateChanged = { peer, isConnected in
-            handler.peer(peer, stateChangedTo: isConnected)
-        }
-    }
-
-    func host() {
-        multipeerManager.role = .advertiser
-        multipeerManager.start()
-    }
-
-    func join() {
-        multipeerManager.role = .joiner
-        multipeerManager.start()
-    }
-
-    func sendPing() {
-        let message = MercuryMessage(type: .buzz)
-        multipeerManager.broadcast(message: message)
-    }
-
-    func send(message: String) {
-        let message = MercuryMessage(type: .message, payload: ["text": message])
-        handler.received(message: message, from: "Me")
-        multipeerManager.broadcast(message: message)
-    }
 }
 
 class ViewController: UIViewController {

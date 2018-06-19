@@ -11,7 +11,7 @@ import MultipeerConnectivity
 import os
 
 enum SessionRole {
-    case advertiser, joiner
+    case advertiser, joiner, relay(from: MCPeerID)
 }
 
 extension MCSession {
@@ -20,13 +20,13 @@ extension MCSession {
     }
 }
 
+enum MessageDecodingError: Error {
+    case illegalPayload
+}
+
 protocol MultipeerMessage {
     static func decode(from data: Data) throws -> Self
     func encode() throws -> Data
-}
-
-enum MessageDecodingError: Error {
-    case illegalPayload
 }
 
 extension MultipeerMessage where Self: NSCoding {
@@ -42,8 +42,22 @@ extension MultipeerMessage where Self: NSCoding {
     }
 }
 
-class MultipeerManager<Message: MultipeerMessage>: NSObject, MCSessionDelegate, MCNearbyServiceBrowserDelegate, MCNearbyServiceAdvertiserDelegate {
-    //static let shared = MultipeerManager()
+extension MultipeerMessage where Self: Codable {
+    static func decode(from data: Data) throws -> Self {
+        let decoder = JSONDecoder()
+        return try decoder.decode(Self.self, from: data)
+    }
+
+    func encode() throws -> Data {
+        let encoder = JSONEncoder()
+        return try encoder.encode(self)
+    }
+}
+
+class MultipeerManager<Message: MultipeerMessage>: NSObject,
+    MCSessionDelegate,
+    MCNearbyServiceBrowserDelegate,
+    MCNearbyServiceAdvertiserDelegate {
 
     var serviceType = "FILL-WITH-PROPER-INFO"
 
@@ -76,6 +90,8 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject, MCSessionDelegate, 
             advertiser.startAdvertisingPeer()
         case .joiner:
             browser.startBrowsingForPeers()
+        case .relay(let advertiser):
+            startRelay(with: advertiser)
         }
     }
 
@@ -85,7 +101,17 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject, MCSessionDelegate, 
             advertiser.stopAdvertisingPeer()
         case .joiner:
             browser.stopBrowsingForPeers()
+        case .relay(let advertiser):
+            stopRelay(with: advertiser)
         }
+    }
+
+    private func startRelay(with advertiser: MCPeerID) {
+
+    }
+
+    private func stopRelay(with advertiser: MCPeerID) {
+
     }
 
     func send(message: Message, to peer: MCPeerID) {
@@ -110,12 +136,12 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject, MCSessionDelegate, 
         }
     }
 
-    // MARK: - advertiser delegate
+    // MARK: - Advertiser delegate
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         invitationHandler(true, self.session)
     }
 
-    // MARK: - browser delegate
+    // MARK: - Browser delegate
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
         print("\(#function)")
         browser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 10)
@@ -125,7 +151,7 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject, MCSessionDelegate, 
         print("\(#function)")
     }
 
-    // MARK: - session delegate
+    // MARK: - Session delegate
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         print("\(#function) - \(peerID.displayName) - \(state)")
         var connected = false

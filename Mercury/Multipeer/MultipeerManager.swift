@@ -27,6 +27,7 @@ enum MessageDecodingError: Error {
 protocol MultipeerMessage {
     static func decode(from data: Data) throws -> Self
     func encode() throws -> Data
+    var isSystemMessage: Bool { get }
 }
 
 extension MultipeerMessage where Self: NSCoding {
@@ -54,12 +55,8 @@ extension MultipeerMessage where Self: Codable {
     }
 }
 
-enum MultipeerManagerInfrastructureMessageType: String {
-    case upgradeToRelay
-    case downgradeToPeer
-}
-
-struct MultipeerManagerInfrastructureMessage: MultipeerMessage, Codable {
+struct MultipeerInfrastructureMessage: MultipeerMessage, Codable {
+    var isSystemMessage: Bool { return true }
     let type: String
 }
 
@@ -122,20 +119,19 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
 
     }
 
-    private func send(infrastructureMessage: MultipeerManagerInfrastructureMessage, toPeer peer: MCPeerID) {
-        do {
-            let data = try infrastructureMessage.encode()
-            try session.send(data, toPeers: [peer], with: .reliable)
-        } catch {
-            print("could not send")
-        }
+    func send(message: Message, to peer: MCPeerID) {
+        send(message: message, to: [peer])
     }
 
-    func send(message: Message, toPeer peer: MCPeerID) {
-        send(message: message, toPeers: [peer])
+    func send(message: Message, to peers: [MCPeerID]) {
+        send(message: Either<Message, MultipeerInfrastructureMessage>.left(message), to: peers)
     }
 
-    func send(message: Message, toPeers peers: [MCPeerID]) {
+    func send(message: Either<Message, MultipeerInfrastructureMessage>, to peer: MCPeerID) {
+        send(message: message, to: [peer])
+    }
+
+    func send(message: Either<Message, MultipeerInfrastructureMessage>, to peers: [MCPeerID]) {
         do {
             let data = try message.encode()
             try session.send(data, toPeers: peers, with: .reliable)
@@ -145,6 +141,10 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
     }
 
     func broadcast(message: Message) {
+        broadcast(message: Either<Message, MultipeerInfrastructureMessage>.left(message))
+    }
+
+    func broadcast(message: Either<Message, MultipeerInfrastructureMessage>) {
         do {
             let data = try message.encode()
             try session.broadcast(data: data, with: .reliable)
@@ -153,14 +153,8 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
         }
     }
 
-    private func handle(message: MultipeerManagerInfrastructureMessage) {
-        guard let type = MultipeerManagerInfrastructureMessageType(rawValue: message.type) else { return }
-        switch type {
-        case .upgradeToRelay:
-            break
-        case .downgradeToPeer:
-            break
-        }
+    func handle(message: MultipeerInfrastructureMessage) {
+
     }
 
     // MARK: - Advertiser delegate
@@ -174,8 +168,8 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
             }
 
             // send message to become relay
-            let message = MultipeerManagerInfrastructureMessage(type: MultipeerManagerInfrastructureMessageType.upgradeToRelay.rawValue)
-            send(infrastructureMessage: message, toPeer: newRelay)
+            let message = MultipeerInfrastructureMessage(type: "becomeRelay")
+            send(message: Either<Message, MultipeerInfrastructureMessage>.right(message), to: newRelay)
 
             // deny connection
             invitationHandler(false, self.session)
@@ -215,11 +209,12 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
         do {
             let message = try Message.decode(from: data)
 
-            // Do not forward infrastructure messages
-            if let infrastructureMessage = message as? MultipeerManagerInfrastructureMessage {
-                self.handle(message: infrastructureMessage)
+            // Do not forward system messages
+            if message.isSystemMessage {
+                self.handle(message: message as! MultipeerInfrastructureMessage)
                 return
             }
+
             self.messageReceived?(peerID.displayName, message)
         } catch {
             print("could not decode received message")

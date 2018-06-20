@@ -33,6 +33,8 @@ struct MercuryMessage: MultipeerMessage {
         return try JSONSerialization.data(withJSONObject: contents, options: [.sortedKeys])
     }
 
+    var isSystemMessage: Bool { return false }
+
     static func decode(from data: Data) throws -> MercuryMessage {
         guard
             let object = try JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],

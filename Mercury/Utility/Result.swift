@@ -13,6 +13,43 @@ enum Either<L, R> {
     case right(R)
 }
 
+extension Either: MultipeerMessage where L: MultipeerMessage, R: MultipeerMessage {
+
+    static func decode(from data: Data) throws -> Either<L, R> {
+        let lefty = try? L.decode(from: data)
+        let righty = try? R.decode(from: data)
+
+        if let v = lefty {
+            return .left(v)
+        }
+
+        if let v = righty {
+            return .right(v)
+        }
+
+        fatalError("could not build \(L.self) nor \(R.self) from data")
+    }
+
+    func encode() throws -> Data {
+        switch self {
+        case .left(let m):
+            return try m.encode()
+        case .right(let m):
+            return try m.encode()
+        }
+    }
+
+    var isSystemMessage: Bool {
+        switch self {
+        case .left(let m):
+            return m.isSystemMessage
+        case .right(let m):
+            return m.isSystemMessage
+        }
+    }
+
+}
+
 enum GenericError: Error {
     case message(String)
     case wrapper(Error)

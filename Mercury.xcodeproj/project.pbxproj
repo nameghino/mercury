@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3513B5EF20D9EAA300589AEA /* UIAlertController+Prompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3513B5EE20D9EAA300589AEA /* UIAlertController+Prompt.swift */; };
+		3513B5F220D9EB1100589AEA /* Result.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3513B5F120D9EB1100589AEA /* Result.swift */; };
 		351C811F20CE110D00DE22C3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C811E20CE110D00DE22C3 /* AppDelegate.swift */; };
 		351C812120CE110D00DE22C3 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C812020CE110D00DE22C3 /* ViewController.swift */; };
 		351C812420CE110D00DE22C3 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 351C812220CE110D00DE22C3 /* Main.storyboard */; };
@@ -15,10 +17,11 @@
 		351C813120CE112E00DE22C3 /* MultipeerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C813020CE112E00DE22C3 /* MultipeerManager.swift */; };
 		351C813420CE27D000DE22C3 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C813320CE27D000DE22C3 /* Message.swift */; };
 		35F1FC7820D211BB00586996 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F1FC7720D211BB00586996 /* HomeViewModel.swift */; };
-		35F1FC7A20D2136000586996 /* MultipeerSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F1FC7920D2136000586996 /* MultipeerSyncEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3513B5EE20D9EAA300589AEA /* UIAlertController+Prompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIAlertController+Prompt.swift"; sourceTree = "<group>"; };
+		3513B5F120D9EB1100589AEA /* Result.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Result.swift; sourceTree = "<group>"; };
 		351C811B20CE110D00DE22C3 /* Mercury.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mercury.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		351C811E20CE110D00DE22C3 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		351C812020CE110D00DE22C3 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -43,6 +46,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3513B5ED20D9EA9300589AEA /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				3513B5EE20D9EAA300589AEA /* UIAlertController+Prompt.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		3513B5F020D9EB0300589AEA /* Utility */ = {
+			isa = PBXGroup;
+			children = (
+				3513B5F120D9EB1100589AEA /* Result.swift */,
+			);
+			path = Utility;
+			sourceTree = "<group>";
+		};
 		351C811220CE110D00DE22C3 = {
 			isa = PBXGroup;
 			children = (
@@ -62,6 +81,8 @@
 		351C811D20CE110D00DE22C3 /* Mercury */ = {
 			isa = PBXGroup;
 			children = (
+				3513B5F020D9EB0300589AEA /* Utility */,
+				3513B5ED20D9EA9300589AEA /* Extensions */,
 				351C813320CE27D000DE22C3 /* Message.swift */,
 				351C813220CE27C300DE22C3 /* Multipeer */,
 				351C811E20CE110D00DE22C3 /* AppDelegate.swift */,
@@ -155,11 +176,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3513B5EF20D9EAA300589AEA /* UIAlertController+Prompt.swift in Sources */,
 				351C812120CE110D00DE22C3 /* ViewController.swift in Sources */,
 				351C813420CE27D000DE22C3 /* Message.swift in Sources */,
 				351C813120CE112E00DE22C3 /* MultipeerManager.swift in Sources */,
+				3513B5F220D9EB1100589AEA /* Result.swift in Sources */,
 				35F1FC7820D211BB00586996 /* HomeViewModel.swift in Sources */,
-				35F1FC7A20D2136000586996 /* MultipeerSyncEngine.swift in Sources */,
 				351C811F20CE110D00DE22C3 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

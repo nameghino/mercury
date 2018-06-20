@@ -43,8 +43,4 @@ class MultipeerSyncEngine<Message: MultipeerMessage & Codable> {
     func onSyncMessageReceived(from peer: String, message: SyncEngineMessage) {
 
     }
-
-
-
-
 }

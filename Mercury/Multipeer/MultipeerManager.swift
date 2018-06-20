@@ -54,6 +54,15 @@ extension MultipeerMessage where Self: Codable {
     }
 }
 
+enum MultipeerManagerInfrastructureMessageType: String {
+    case upgradeToRelay
+    case downgradeToPeer
+}
+
+struct MultipeerManagerInfrastructureMessage: MultipeerMessage, Codable {
+    let type: String
+}
+
 class MultipeerManager<Message: MultipeerMessage>: NSObject,
     MCSessionDelegate,
     MCNearbyServiceBrowserDelegate,
@@ -107,18 +116,26 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
     }
 
     private func startRelay(with advertiser: MCPeerID) {
-
     }
 
     private func stopRelay(with advertiser: MCPeerID) {
 
     }
 
-    func send(message: Message, to peer: MCPeerID) {
-        send(message: message, to: [peer])
+    private func send(infrastructureMessage: MultipeerManagerInfrastructureMessage, toPeer peer: MCPeerID) {
+        do {
+            let data = try infrastructureMessage.encode()
+            try session.send(data, toPeers: [peer], with: .reliable)
+        } catch {
+            print("could not send")
+        }
     }
 
-    func send(message: Message, to peers: [MCPeerID]) {
+    func send(message: Message, toPeer peer: MCPeerID) {
+        send(message: message, toPeers: [peer])
+    }
+
+    func send(message: Message, toPeers peers: [MCPeerID]) {
         do {
             let data = try message.encode()
             try session.send(data, toPeers: peers, with: .reliable)
@@ -136,8 +153,34 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
         }
     }
 
+    private func handle(message: MultipeerManagerInfrastructureMessage) {
+        guard let type = MultipeerManagerInfrastructureMessageType(rawValue: message.type) else { return }
+        switch type {
+        case .upgradeToRelay:
+            break
+        case .downgradeToPeer:
+            break
+        }
+    }
+
     // MARK: - Advertiser delegate
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+        guard session.connectedPeers.count <= 8 else {
+            // pick peer to upgrade to relay
+            // for now, just take the first one
+            guard let newRelay = session.connectedPeers.first else {
+                invitationHandler(false, self.session)
+                return
+            }
+
+            // send message to become relay
+            let message = MultipeerManagerInfrastructureMessage(type: MultipeerManagerInfrastructureMessageType.upgradeToRelay.rawValue)
+            send(infrastructureMessage: message, toPeer: newRelay)
+
+            // deny connection
+            invitationHandler(false, self.session)
+            return
+        }
         invitationHandler(true, self.session)
     }
 
@@ -171,6 +214,12 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
         print("\(#function) - \(peerID.displayName) - \(data)")
         do {
             let message = try Message.decode(from: data)
+
+            // Do not forward infrastructure messages
+            if let infrastructureMessage = message as? MultipeerManagerInfrastructureMessage {
+                self.handle(message: infrastructureMessage)
+                return
+            }
             self.messageReceived?(peerID.displayName, message)
         } catch {
             print("could not decode received message")

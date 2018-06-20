@@ -26,13 +26,6 @@ extension UITextView {
     }
 }
 
-protocol HomeViewModelProtocol {
-    func host()
-    func join()
-    func sendPing()
-    func send(message: String)
-}
-
 protocol SessionHandlerProtocol {
     func received(message: MercuryMessage, from peer: String)
     func peer(_ peer: String, stateChangedTo connected: Bool)
@@ -130,13 +123,21 @@ class ViewController: UIViewController {
     @objc
     func host(_ sender: UIButton) {
         consoleTextField.log("host tapped")
-        viewModel.host()
+        let pin = viewModel.host()
+        consoleTextField.log("now hosting with pin \(pin)")
     }
 
     @objc
     func join(_ sender: UIButton) {
         consoleTextField.log("join tapped")
-        viewModel.join()
+        prompt(with: "PIN code for room?", acceptButtonTitle: "Join") { [unowned self] result in
+            switch result {
+            case .failure(let error):
+                self.alert(with: "Error", message: "\(error)")
+            case .success(let pin):
+                self.viewModel.join(with: pin)
+            }
+        }
     }
 
     @objc

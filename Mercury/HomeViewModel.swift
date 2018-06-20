@@ -8,31 +8,59 @@
 
 import Foundation
 
+typealias PinCode = String
+
+protocol HomeViewModelProtocol {
+    func host() -> PinCode
+    func join(with pin: String)
+    func sendPing()
+    func send(message: String)
+}
+
 class HomeViewModel: HomeViewModelProtocol {
     private let handler: SessionHandlerProtocol
-    private var multipeerManager: MultipeerManager<MercuryMessage> = MultipeerManager<MercuryMessage>(serviceType: "boarding")
+    lazy private var multipeerManager: MultipeerManager<MercuryMessage> = {
+        guard let pin = self.pin else {
+            fatalError("pin code was not set")
+        }
+        let serviceName = "boarding-\(pin)"
+        return MultipeerManager<MercuryMessage>(serviceType: serviceName)
+    }()
 
-    private var scanMultipeerManager = MultipeerManager<Scan>(serviceType: "boarding-scan")
+    private(set) var pin: String?
 
-    init(with handler: SessionHandlerProtocol) {
-        self.handler = handler
-
+    private func setupHandlers() {
         // Ugly hack, too late to do it right, maybe tomorrow
         multipeerManager.messageReceived = { from, message in
-            handler.received(message: message, from: from)
+            self.handler.received(message: message, from: from)
         }
 
         multipeerManager.peerStateChanged = { peer, isConnected in
-            handler.peer(peer, stateChangedTo: isConnected)
+            self.handler.peer(peer, stateChangedTo: isConnected)
         }
     }
 
-    func host() {
-        multipeerManager.role = .advertiser
-        multipeerManager.start()
+    init(with handler: SessionHandlerProtocol) {
+        self.handler = handler
     }
 
-    func join() {
+    func host() -> PinCode {
+        if let pin = self.pin {
+            print("hosting with pin \(pin)")
+        } else {
+            pin = HomeViewModel.generatePin()
+            setupHandlers()
+            multipeerManager.role = .advertiser
+            multipeerManager.start()
+        }
+
+        return pin!
+    }
+
+    func join(with pin: String) {
+        self.pin = pin
+        multipeerManager = MultipeerManager<MercuryMessage>.init(serviceType: "boarding-\(pin)")
+        setupHandlers()
         multipeerManager.role = .joiner
         multipeerManager.start()
     }
@@ -48,13 +76,8 @@ class HomeViewModel: HomeViewModelProtocol {
         multipeerManager.broadcast(message: message)
     }
 
-    struct Scan: MultipeerMessage, Codable {
-        let sid: String
-        let date: Date
-    }
-
-    func play() {
-        let s = Scan(sid: "o587933", date: Date())
-        scanMultipeerManager.broadcast(message: s)
+    private static func generatePin() -> String {
+        let pin = arc4random() % UInt32(10000)
+        return "\(pin)"
     }
 }

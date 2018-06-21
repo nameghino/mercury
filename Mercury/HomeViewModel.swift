@@ -54,6 +54,9 @@ class HomeViewModel: HomeViewModelProtocol {
             multipeerManager.start()
         }
 
+        let message = MercuryMessage(type: .message, payload: ["text": "Hosting with pin \(pin!)"])
+        handler.received(message: message, from: "System")
+
         return pin!
     }
 

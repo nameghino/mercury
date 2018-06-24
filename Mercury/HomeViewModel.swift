@@ -24,7 +24,7 @@ class HomeViewModel: HomeViewModelProtocol {
             fatalError("pin code was not set")
         }
         let serviceName = "boarding-\(pin)"
-        return EncryptedMultipeerManager<MercuryMessage>(serviceType: serviceName)
+        return MultipeerManager<MercuryMessage>(serviceType: serviceName)
     }()
 
     private(set) var pin: String?
@@ -62,7 +62,7 @@ class HomeViewModel: HomeViewModelProtocol {
 
     func join(with pin: String) {
         self.pin = pin
-        multipeerManager = EncryptedMultipeerManager<MercuryMessage>.init(serviceType: "boarding-\(pin)")
+        multipeerManager = MultipeerManager<MercuryMessage>.init(serviceType: "boarding-\(pin)")
         setupHandlers()
         multipeerManager.role = .joiner
         multipeerManager.start()

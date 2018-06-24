@@ -17,10 +17,21 @@ class EncryptionKey {
         case size1024 = 1024
         case size2048 = 2048
         case size4096 = 4096
+
+        static var `default`: EncryptionKey.Size = .size2048
     }
 
     private let privateKey: SecKey?
     let publicKey: SecKey
+
+    lazy var base64PublicKey: String = {
+        var error: Unmanaged<CFError>? = nil
+        guard let hostPublicData = SecKeyCopyExternalRepresentation(publicKey, &error) else {
+            fatalError("😡 Could not make an external representation.")
+        }
+
+        return (hostPublicData as NSData as Data).base64EncodedString()
+    }()
 
     init(applicationTag: String, keySize: EncryptionKey.Size) {
         // create keys
@@ -117,6 +128,11 @@ class EncryptionKey {
 
     static func encrypt(data: Data, with key: SecKey) -> Data {
         var clientError: Unmanaged<CFError>?
+
+        guard SecKeyIsAlgorithmSupported(key, .encrypt, .rsaEncryptionPKCS1) else {
+            fatalError("unsupported operation type")
+        }
+
         let clientTemp = SecKeyCreateEncryptedData(key,
                                                    SecKeyAlgorithm.rsaEncryptionPKCS1,
                                                    data as CFData,

@@ -11,7 +11,7 @@ import MultipeerConnectivity
 import os
 
 enum SessionRole {
-    case advertiser, joiner, relay(from: MCPeerID)
+    case advertiser, joiner
 }
 
 extension MCSession {
@@ -96,8 +96,6 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
             advertiser.startAdvertisingPeer()
         case .joiner:
             browser.startBrowsingForPeers()
-        case .relay(let advertiser):
-            startRelay(with: advertiser)
         }
     }
 
@@ -107,16 +105,7 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
             advertiser.stopAdvertisingPeer()
         case .joiner:
             browser.stopBrowsingForPeers()
-        case .relay(let advertiser):
-            stopRelay(with: advertiser)
         }
-    }
-
-    private func startRelay(with advertiser: MCPeerID) {
-    }
-
-    private func stopRelay(with advertiser: MCPeerID) {
-
     }
 
     func send(message: Message, to peer: MCPeerID) {
@@ -124,14 +113,6 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
     }
 
     func send(message: Message, to peers: [MCPeerID]) {
-        send(message: Either<Message, MultipeerInfrastructureMessage>.left(message), to: peers)
-    }
-
-    func send(message: Either<Message, MultipeerInfrastructureMessage>, to peer: MCPeerID) {
-        send(message: message, to: [peer])
-    }
-
-    func send(message: Either<Message, MultipeerInfrastructureMessage>, to peers: [MCPeerID]) {
         do {
             let data = try message.encode()
             try session.send(data, toPeers: peers, with: .reliable)
@@ -141,10 +122,6 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
     }
 
     func broadcast(message: Message) {
-        broadcast(message: Either<Message, MultipeerInfrastructureMessage>.left(message))
-    }
-
-    func broadcast(message: Either<Message, MultipeerInfrastructureMessage>) {
         do {
             let data = try message.encode()
             try session.broadcast(data: data, with: .reliable)
@@ -153,28 +130,8 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
         }
     }
 
-    func handle(message: MultipeerInfrastructureMessage) {
-
-    }
-
     // MARK: - Advertiser delegate
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        guard session.connectedPeers.count <= 8 else {
-            // pick peer to upgrade to relay
-            // for now, just take the first one
-            guard let newRelay = session.connectedPeers.first else {
-                invitationHandler(false, self.session)
-                return
-            }
-
-            // send message to become relay
-            let message = MultipeerInfrastructureMessage(type: "becomeRelay")
-            send(message: Either<Message, MultipeerInfrastructureMessage>.right(message), to: newRelay)
-
-            // deny connection
-            invitationHandler(false, self.session)
-            return
-        }
         invitationHandler(true, self.session)
     }
 
@@ -208,13 +165,6 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
         print("\(#function) - \(peerID.displayName) - \(data)")
         do {
             let message = try Message.decode(from: data)
-
-            // Do not forward system messages
-            if message.isSystemMessage {
-                self.handle(message: message as! MultipeerInfrastructureMessage)
-                return
-            }
-
             self.messageReceived?(peerID.displayName, message)
         } catch {
             print("could not decode received message")

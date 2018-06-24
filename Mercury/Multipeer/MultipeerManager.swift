@@ -75,6 +75,10 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
     var role: SessionRole = .advertiser
     var peerStateChanged: ((String, Bool) -> Void)?
     var messageReceived: ((String, Message) -> Void)?
+    var systemMessageReceived: ((String, Message) -> Void)?
+
+    lazy private var ownKey: EncryptionKey? = { EncryptionKey(applicationTag: self.serviceType, keySize: EncryptionKey.Size.size2048) }()
+    private var peerEncryptionKeys: [MCPeerID : EncryptionKey] = [:]
 
     lazy var session: MCSession = {
         let s = MCSession(peer: self.peerID, securityIdentity: nil, encryptionPreference: .required)
@@ -133,7 +137,8 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
 
     func send(message: Either<Message, MultipeerInfrastructureMessage>, to peers: [MCPeerID]) {
         do {
-            let data = try message.encode()
+            let messageData = try message.encode()
+            let data = try ownKey?.encrypt(data: messageData) ?? messageData
             try session.send(data, toPeers: peers, with: .reliable)
         } catch {
             print("could not send")
@@ -146,15 +151,17 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
 
     func broadcast(message: Either<Message, MultipeerInfrastructureMessage>) {
         do {
-            let data = try message.encode()
+            let messageData = try message.encode()
+            let data = try ownKey?.encrypt(data: messageData) ?? messageData
             try session.broadcast(data: data, with: .reliable)
         } catch {
             print("could not broadcast")
         }
     }
 
-    func handle(message: MultipeerInfrastructureMessage) {
-
+    func handle(message: MultipeerInfrastructureMessage, from: MCPeerID) {
+        let sender = peerID.displayName
+        self.systemMessageReceived?(sender, message)
     }
 
     // MARK: - Advertiser delegate
@@ -207,11 +214,14 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         print("\(#function) - \(peerID.displayName) - \(data)")
         do {
-            let message = try Message.decode(from: data)
+
+            let key = peerEncryptionKeys[peerID]
+            let messageData = try key?.decrypt(data: data) ?? data
+            let message = try Message.decode(from: messageData)
 
             // Do not forward system messages
             if message.isSystemMessage {
-                self.handle(message: message as! MultipeerInfrastructureMessage)
+                self.handle(message: message as! MultipeerInfrastructureMessage, from: peerID)
                 return
             }
 

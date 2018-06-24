@@ -17,6 +17,7 @@
 		351C813120CE112E00DE22C3 /* MultipeerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C813020CE112E00DE22C3 /* MultipeerManager.swift */; };
 		351C813420CE27D000DE22C3 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351C813320CE27D000DE22C3 /* Message.swift */; };
 		35F1FC7820D211BB00586996 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F1FC7720D211BB00586996 /* HomeViewModel.swift */; };
+		35FEE3BE20E01F0F00D3C083 /* EncryptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35FEE3BD20E01F0F00D3C083 /* EncryptionManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		351C813320CE27D000DE22C3 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		35F1FC7720D211BB00586996 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		35F1FC7920D2136000586996 /* MultipeerSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerSyncEngine.swift; sourceTree = "<group>"; };
+		35FEE3BD20E01F0F00D3C083 /* EncryptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncryptionManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +83,7 @@
 		351C811D20CE110D00DE22C3 /* Mercury */ = {
 			isa = PBXGroup;
 			children = (
+				35FEE3BC20E01EFC00D3C083 /* Encryption */,
 				3513B5F020D9EB0300589AEA /* Utility */,
 				3513B5ED20D9EA9300589AEA /* Extensions */,
 				351C813320CE27D000DE22C3 /* Message.swift */,
@@ -103,6 +106,14 @@
 				35F1FC7920D2136000586996 /* MultipeerSyncEngine.swift */,
 			);
 			path = Multipeer;
+			sourceTree = "<group>";
+		};
+		35FEE3BC20E01EFC00D3C083 /* Encryption */ = {
+			isa = PBXGroup;
+			children = (
+				35FEE3BD20E01F0F00D3C083 /* EncryptionManager.swift */,
+			);
+			path = Encryption;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -176,6 +187,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				35FEE3BE20E01F0F00D3C083 /* EncryptionManager.swift in Sources */,
 				3513B5EF20D9EAA300589AEA /* UIAlertController+Prompt.swift in Sources */,
 				351C812120CE110D00DE22C3 /* ViewController.swift in Sources */,
 				351C813420CE27D000DE22C3 /* Message.swift in Sources */,

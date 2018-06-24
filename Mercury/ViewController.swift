@@ -32,6 +32,24 @@ protocol SessionHandlerProtocol {
 }
 
 class ViewController: UIViewController {
+
+    private lazy var qrCodeImageView: UIImageView = {
+        let v = UIImageView()
+        v.isHidden = true
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.isUserInteractionEnabled = true
+        let gr = UITapGestureRecognizer(target: self, action: #selector(hideQRCode(_:)))
+        v.addGestureRecognizer(gr)
+        return v
+    }()
+
+    var qrCodeImage: UIImage? {
+        get { return qrCodeImageView.image }
+        set {
+            qrCodeImageView.image = newValue
+        }
+    }
+
     lazy var viewModel: HomeViewModelProtocol = {
         let vm = HomeViewModel(with: self)
         return vm
@@ -112,19 +130,32 @@ class ViewController: UIViewController {
         stackView.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(stackView)
+        view.addSubview(qrCodeImageView)
         NSLayoutConstraint.activate([
             stackView.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 1),
             stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             stackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            stackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor)
-        ])
+            stackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+
+            qrCodeImageView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            qrCodeImageView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            qrCodeImageView.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 0.75),
+            qrCodeImageView.heightAnchor.constraint(equalTo: qrCodeImageView.widthAnchor, multiplier: 1),
+            ])
     }
 
     @objc
     func host(_ sender: UIButton) {
-        consoleTextField.log("host tapped")
-        let pin = viewModel.host()
-        consoleTextField.log("now hosting with pin \(pin)")
+
+        if qrCodeImage == nil {
+            consoleTextField.log("host tapped")
+            let pin = viewModel.host()
+            consoleTextField.log("now hosting with pin \(pin)")
+            qrCodeImage = generate(from: "mercury://join?room=\(pin)")
+        } else {
+            qrCodeImageView.isHidden = false
+        }
+
     }
 
     @objc
@@ -147,6 +178,11 @@ class ViewController: UIViewController {
     }
 
     @objc
+    func hideQRCode(_ sender: UIButton) {
+        qrCodeImageView.isHidden = true
+    }
+
+    @objc
     func compose(_ sender: UIButton) {
         let controller = UIAlertController(title: "Compose message", message: nil, preferredStyle: .alert)
         controller.addTextField { textField in
@@ -157,7 +193,7 @@ class ViewController: UIViewController {
             guard
                 let content = controller?.textFields?.first?.text,
                 let strongSelf = self
-            else { return }
+                else { return }
             strongSelf.viewModel.send(message: content)
         }
 

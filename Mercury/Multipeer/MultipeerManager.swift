@@ -128,7 +128,7 @@ class MultipeerManager<Message: MultipeerMessage>: NSObject,
     func didReceive(data: Data, from peer: MCPeerID, from session: MCSession) {
         do {
             let message = try Message.decode(from: data)
-            self.messageReceived?(peerID.displayName, message)
+            self.messageReceived?(peer.displayName, message)
         } catch {
             print("could not decode received message")
         }

@@ -146,16 +146,13 @@ class ViewController: UIViewController {
 
     @objc
     func host(_ sender: UIButton) {
-
-        if qrCodeImage == nil {
-            consoleTextField.log("host tapped")
-            let pin = viewModel.host()
-            consoleTextField.log("now hosting with pin \(pin)")
-            qrCodeImage = generate(from: "mercury://join?room=\(pin)")
-        } else {
+        guard !viewModel.isHosting else {
             qrCodeImageView.isHidden = false
+            return
         }
-
+        let pin = viewModel.host()
+        consoleTextField.log("now hosting with pin \(pin)")
+        qrCodeImageView.image = viewModel.joinQRCodeImage
     }
 
     @objc

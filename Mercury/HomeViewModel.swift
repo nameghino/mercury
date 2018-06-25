@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 typealias PinCode = String
 
@@ -15,10 +16,15 @@ protocol HomeViewModelProtocol {
     func join(with pin: String)
     func sendPing()
     func send(message: String)
+
+    var isHosting: Bool { get }
+    var pin: String? { get }
+    var joinQRCodeImage: UIImage? { get }
 }
 
 class HomeViewModel: HomeViewModelProtocol {
     private let handler: SessionHandlerProtocol
+
     lazy private var multipeerManager: MultipeerManager<MercuryMessage> = {
         guard let pin = self.pin else {
             fatalError("pin code was not set")
@@ -28,6 +34,8 @@ class HomeViewModel: HomeViewModelProtocol {
     }()
 
     private(set) var pin: String?
+    private(set) var joinQRCodeImage: UIImage?
+    private(set) var isHosting: Bool
 
     private func setupHandlers() {
         // Ugly hack, too late to do it right, maybe tomorrow
@@ -42,13 +50,16 @@ class HomeViewModel: HomeViewModelProtocol {
 
     init(with handler: SessionHandlerProtocol) {
         self.handler = handler
+        self.isHosting = false
     }
 
     func host() -> PinCode {
         if let pin = self.pin {
             print("hosting with pin \(pin)")
         } else {
+            isHosting = true
             pin = HomeViewModel.generatePin()
+            joinQRCodeImage = generate(from: "mercury://join?room=\(pin!)")
             setupHandlers()
             multipeerManager.role = .advertiser
             multipeerManager.start()
